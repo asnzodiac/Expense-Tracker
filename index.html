@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>My Expenses</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<style>
+:root{
+  --bg:#f6f7fb;--card:#fff;--text:#1b1f2a;--muted:#6b7385;--line:#e6e9f2;--accent:#4f46e5;--good:#10b981;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8;}
+}
+:root[data-theme="dark"]{--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:20px;margin:0}
+.sub{font-size:12px;color:var(--muted)}
+.btn{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;gap:6px;margin:10px 0 14px;overflow-x:auto}
+.tab{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{font-size:13px;margin:0 0 10px;color:var(--muted);font-weight:600}
+.kpi .v{font-weight:700;margin-top:2px}
+.kpi .l{font-size:12px;color:var(--muted)}
+select,input[type=search]{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+input[type=search]{flex:1;min-width:140px}
+.scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;cursor:pointer;user-select:none}
+td.amt,th.amt{text-align:right}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:12px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.bar{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:12px}
+.bar .n{width:90px;color:var(--muted)}
+.bar .t{flex:1;background:var(--line);border-radius:6px;height:12px;overflow:hidden}
+.bar .t b{display:block;height:100%;border-radius:6px}
+.bar .a{width:76px;text-align:right}
+.empty{color:var(--muted);font-size:13px;padding:18px;text-align:center}
+.banner{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px;background:#fef3c7;color:#78350f}
+.ins{white-space:pre-wrap;font-size:14px;line-height:1.5}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px}
+.dot.live{background:var(--good)}
+svg{max-width:100%;height:auto;display:block}
+svg text{fill:var(--muted);font-size:10px}
+#login{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+#login h1{font-size:26px}
+#login p{color:var(--muted);max-width:340px;margin:0;line-height:1.5;font-size:14px}
+#login .btn{padding:12px 20px;font-size:15px}
+#app[hidden],#login[hidden]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Sign-in screen: no data is loaded until you sign in with your Google account -->
+  <div id="login">
+    <div style="font-size:48px">💸</div>
+    <h1>My Expenses</h1>
+    <p>Sign in with the Google account that owns the Expense Tracker sheet. Only that account can load the data.</p>
+    <button class="btn primary" id="signin">Sign in with Google</button>
+    <div class="sub" id="loginmsg"></div>
+  </div>
+
+  <div id="app" hidden>
+    <header>
+      <div>
+        <h1>💸 Expense Tracker</h1>
+        <div class="sub"><span id="dot" class="dot"></span><span id="status">Loading…</span></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="theme" title="Toggle theme">🌓</button>
+        <button class="btn primary" id="refresh">↻ Refresh</button>
+        <button class="btn" id="signout">Sign out</button>
+      </div>
+    </header>
+
+    <div id="banner"></div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab on" data-t="dash">Dashboard</div>
+      <div class="tab" data-t="tx">Transactions</div>
+      <div class="tab" data-t="sum">Summary</div>
+      <div class="tab" data-t="ins">Insights</div>
+    </div>
+
+    <section id="dash">
+      <div class="row" style="margin-bottom:12px"><select id="month"></select></div>
+      <div class="grid kpis" id="kpis"></div>
+      <div class="grid two" style="margin-top:12px">
+        <div class="card"><h2>By category</h2><div id="donut"></div><div class="legend" id="legend"></div></div>
+        <div class="card"><h2>Category totals</h2><div id="bars"></div></div>
+      </div>
+      <div class="grid two" style="margin-top:12px">
+        <div class="card"><h2>Daily spending</h2><div id="daily"></div></div>
+        <div class="card"><h2>Monthly trend</h2><div id="monthly"></div></div>
+      </div>
+    </section>
+
+    <section id="tx" hidden>
+      <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <input type="search" id="q" placeholder="Search remarks">
+          <select id="cat"></select>
+        </div>
+        <div class="scroll"><table>
+          <thead><tr><th data-s="date">Date</th><th data-s="cat">Category</th><th data-s="rem">Remarks</th><th class="amt" data-s="amt">Amount</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="sum" hidden><div class="card"><h2>Summary sheet</h2><div id="sumbody"></div></div></section>
+    <section id="ins" hidden><div id="insbody"></div></section>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(function(){
+  // ============ CONFIG: paste your Google OAuth Client ID here ============
+  var CLIENT_ID = "PASTE_YOUR_CLIENT_ID_HERE.apps.googleusercontent.com";
+  // ========================================================================
+  var SHEET="1lj9yFFns_KcbkB0qNZwx2wvRh2Vr8Q9tkp-HXl5JJ90";
+  var SCOPE="https://www.googleapis.com/auth/spreadsheets.readonly";
+  var COLORS=["#6366f1","#f59e0b","#10b981","#ef4444","#06b6d4","#ec4899","#8b5cf6","#84cc16","#f97316","#14b8a6","#a855f7","#64748b"];
+  var S={exp:[],sum:[],ins:[],month:"all",cat:"all",q:"",sort:"date",dir:-1};
+  var $=function(id){return document.getElementById(id)};
+  var fmt=function(n){return "₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:2})};
+  var esc=function(s){var d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML};
+  var catColor={};
+  function colorFor(c){if(!catColor[c])catColor[c]=COLORS[Object.keys(catColor).length%COLORS.length];return catColor[c]}
+  function store(k,v){try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+  function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+  // ---------- auth ----------
+  var tokenClient=null,token=null,tokenExp=0,timer=null;
+  function setLoginMsg(m){$("loginmsg").textContent=m||""}
+  function initAuth(){
+    if(!window.google||!google.accounts){setTimeout(initAuth,200);return}
+    if(CLIENT_ID.indexOf("PASTE_YOUR")===0){setLoginMsg("Setup needed: add your Google Client ID at the top of this file.");return}
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:CLIENT_ID,scope:SCOPE,
+      callback:function(r){
+        if(r.error){
+          if(load("signedin")){store("signedin",null)}
+          showLogin(r.error==="access_denied"?"Access was denied.":"Sign-in didn't complete. Tap the button to try again.");return}
+        token=r.access_token;tokenExp=Date.now()+(r.expires_in-60)*1000;
+        store("signedin","1");showApp();fetchAll();
+        clearTimeout(timer);timer=setTimeout(function(){tokenClient.requestAccessToken({prompt:""})},Math.max(60000,(r.expires_in-120)*1000));
+      },
+      error_callback:function(){showLogin("Sign-in popup was closed or blocked.")}
+    });
+    $("signin").onclick=function(){tokenClient.requestAccessToken({prompt:load("signedin")?"":"consent"})};
+    if(load("signedin")){tokenClient.requestAccessToken({prompt:""})}
+  }
+  function showLogin(msg){$("app").hidden=true;$("login").hidden=false;setLoginMsg(msg)}
+  function showApp(){$("login").hidden=true;$("app").hidden=false}
+  $("signout").onclick=function(){
+    if(token&&window.google)google.accounts.oauth2.revoke(token,function(){});
+    token=null;store("signedin",null);clearTimeout(timer);
+    S.exp=[];S.sum=[];S.ins=[];showLogin("Signed out.");
+  };
+
+  // ---------- data ----------
+  function api(range){
+    var url="https://sheets.googleapis.com/v4/spreadsheets/"+SHEET+"/values/"+encodeURIComponent(range)+"?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING";
+    return fetch(url,{headers:{Authorization:"Bearer "+token}}).then(function(r){
+      if(r.status===401){var e=new Error("auth");e.code=401;throw e}
+      if(r.status===403){var e2=new Error("forbidden");e2.code=403;throw e2}
+      if(!r.ok){var e3=new Error("http");e3.code=r.status;throw e3}
+      return r.json()}).then(function(j){return j.values||[]});
+  }
+  function banner(h){$("banner").innerHTML=h?'<div class="banner">'+h+'</div>':""}
+  function status(m,l){$("status").textContent=m;$("dot").className="dot"+(l?" live":"")}
+  function fetchAll(){
+    if(!token)return;status("Refreshing…",false);
+    Promise.all([api("Expenses!A1:D5000"),api("Summary!A1:B60"),api("Insights!A1:B200")]).then(function(r){
+      S.exp=parseExp(r[0]);S.sum=r[1];S.ins=r[2];banner("");
+      status("Live · updated "+new Date().toLocaleTimeString(),true);renderAll();
+    }).catch(function(e){
+      status("Not live",false);
+      if(e.code===401){showLogin("Session expired. Sign in again.");store("signedin",null)}
+      else if(e.code===403)banner("This Google account can't read the sheet, or the Google Sheets API isn't enabled in your Cloud project.");
+      else banner("Couldn't load data. Check your connection and tap Refresh.");
+    });
+  }
+  setInterval(function(){if(token&&!document.hidden)fetchAll()},30000);
+  document.addEventListener("visibilitychange",function(){if(!document.hidden&&token)fetchAll()});
+  $("refresh").onclick=fetchAll;
+
+  // ---------- ui ----------
+  $("theme").onclick=function(){var r=document.documentElement;var dark=r.getAttribute("data-theme")==="dark"||(r.getAttribute("data-theme")!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.setAttribute("data-theme",dark?"light":"dark")};
+  $("tabs").onclick=function(e){var t=e.target.dataset.t;if(!t)return;
+    [].forEach.call(document.querySelectorAll(".tab"),function(x){x.classList.toggle("on",x.dataset.t===t)});
+    ["dash","tx","sum","ins"].forEach(function(id){$(id).hidden=id!==t})};
+
+  function parseExp(rows){
+    return (rows||[]).slice(1).filter(function(r){return r&&r[0]}).map(function(r){
+      var d=new Date(String(r[0]).replace(" ","T"));
+      return {date:d,raw:r[0],amt:parseFloat(String(r[1]).replace(/[^0-9.\-]/g,""))||0,cat:r[2]||"Other",rem:r[3]||""};
+    }).filter(function(x){return !isNaN(x.date)});
+  }
+  function mkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+  function mlabel(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,1).toLocaleString("en",{month:"short",year:"numeric"})}
+  function filtered(){return S.exp.filter(function(e){return S.month==="all"||mkey(e.date)===S.month})}
+
+  function renderFilters(){
+    var months=Array.from(new Set(S.exp.map(function(e){return mkey(e.date)}))).sort().reverse();
+    var m=$("month");m.innerHTML='<option value="all">All time</option>'+months.map(function(k){return '<option value="'+k+'">'+mlabel(k)+'</option>'}).join("");
+    m.value=months.indexOf(S.month)>=0?S.month:"all";S.month=m.value;
+    var cats=Array.from(new Set(S.exp.map(function(e){return e.cat}))).sort();
+    var c=$("cat");c.innerHTML='<option value="all">All categories</option>'+cats.map(function(k){return '<option>'+esc(k)+'</option>'}).join("");
+    c.value=cats.indexOf(S.cat)>=0?S.cat:"all";S.cat=c.value;
+  }
+  $("month").onchange=function(){S.month=this.value;renderDash()};
+  $("cat").onchange=function(){S.cat=this.value;renderTx()};
+  $("q").oninput=function(){S.q=this.value.toLowerCase();renderTx()};
+  document.querySelector("thead").onclick=function(e){var s=e.target.dataset.s;if(!s)return;S.dir=S.sort===s?-S.dir:-1;S.sort=s;renderTx()};
+
+  function renderDash(){
+    var data=filtered();
+    var total=data.reduce(function(a,e){return a+e.amt},0);
+    var days=new Set(data.map(function(e){return e.date.toDateString()})).size||1;
+    var byCat={};data.forEach(function(e){byCat[e.cat]=(byCat[e.cat]||0)+e.amt});
+    var top=Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a]})[0];
+    var biggest=data.slice().sort(function(a,b){return b.amt-a.amt})[0];
+    $("kpis").innerHTML=[
+      ["Total spent",fmt(total)],["Transactions",data.length],["Avg per active day",fmt(total/days)],
+      ["Top category",top?esc(top)+" · "+fmt(byCat[top]):"—"],["Largest expense",biggest?fmt(biggest.amt):"—"]
+    ].map(function(k){return '<div class="card kpi"><div class="l">'+k[0]+'</div><div class="v" style="font-size:'+(String(k[1]).length>14?15:24)+'px">'+k[1]+'</div></div>'}).join("");
+
+    var cats=Object.keys(byCat).filter(function(c){return byCat[c]>0}).sort(function(a,b){return byCat[b]-byCat[a]});
+    if(!cats.length){$("donut").innerHTML='<div class="empty">No expenses yet</div>';$("legend").innerHTML="";$("bars").innerHTML='<div class="empty">No expenses yet</div>'}
+    else{
+      var R=70,C=2*Math.PI*R,off=0,svg='<svg viewBox="0 0 200 200" width="220" style="margin:0 auto"><g transform="rotate(-90 100 100)">';
+      cats.forEach(function(c){var len=byCat[c]/total*C;
+        svg+='<circle cx="100" cy="100" r="'+R+'" fill="none" stroke="'+colorFor(c)+'" stroke-width="28" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'"><title>'+esc(c)+': '+fmt(byCat[c])+'</title></circle>';off+=len});
+      svg+='</g><text x="100" y="98" text-anchor="middle" style="font-size:11px">Total</text><text x="100" y="116" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--text)">'+fmt(total)+'</text></svg>';
+      $("donut").innerHTML=svg;
+      $("legend").innerHTML=cats.map(function(c){return '<span><i style="background:'+colorFor(c)+'"></i>'+esc(c)+' '+Math.round(byCat[c]/total*100)+'%</span>'}).join("");
+      var mx=byCat[cats[0]];
+      $("bars").innerHTML=cats.map(function(c){return '<div class="bar"><span class="n">'+esc(c)+'</span><span class="t"><b style="width:'+(byCat[c]/mx*100)+'%;background:'+colorFor(c)+'"></b></span><span class="a">'+fmt(byCat[c])+'</span></div>'}).join("");
+    }
+    var dm={};data.forEach(function(e){var l=e.date.getFullYear()+"-"+String(e.date.getMonth()+1).padStart(2,"0")+"-"+String(e.date.getDate()).padStart(2,"0");dm[l]=(dm[l]||0)+e.amt});
+    var dk=Object.keys(dm).sort().slice(-31);
+    $("daily").innerHTML=chart(dk.map(function(k){return {l:k.slice(5),v:dm[k]}}),true);
+    var mm={};S.exp.forEach(function(e){var k=mkey(e.date);mm[k]=(mm[k]||0)+e.amt});
+    var mk=Object.keys(mm).sort().slice(-12);
+    $("monthly").innerHTML=chart(mk.map(function(k){return {l:mlabel(k).slice(0,3),v:mm[k]}}),false);
+  }
+  function chart(pts,line){
+    if(!pts.length)return '<div class="empty">No data yet</div>';
+    var W=420,H=200,p=28,mx=Math.max.apply(null,pts.map(function(x){return x.v}))||1;
+    var bw=(W-p*2)/pts.length,svg='<svg viewBox="0 0 '+W+' '+H+'">';
+    for(var i=0;i<=3;i++){var y=H-p-(H-p*2)*i/3;svg+='<line x1="'+p+'" x2="'+(W-p)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="2" y="'+(y+3)+'">'+Math.round(mx*i/3)+'</text>'}
+    var step=Math.ceil(pts.length/8);
+    pts.forEach(function(d,i){
+      var h=(H-p*2)*d.v/mx,x=p+i*bw,y=H-p-h;
+      svg+='<rect x="'+(x+bw*.15)+'" y="'+y+'" width="'+(bw*.7)+'" height="'+h+'" rx="3" fill="var(--accent)" opacity="'+(line?.85:1)+'"><title>'+esc(d.l)+': '+fmt(d.v)+'</title></rect>';
+      if(i%step===0)svg+='<text x="'+(x+bw/2)+'" y="'+(H-10)+'" text-anchor="middle">'+esc(d.l)+'</text>';
+    });
+    if(line&&pts.length>1){var path=pts.map(function(d,i){return (i?"L":"M")+(p+i*bw+bw/2)+" "+(H-p-(H-p*2)*d.v/mx)}).join(" ");svg+='<path d="'+path+'" fill="none" stroke="#f59e0b" stroke-width="2"/>'}
+    return svg+'</svg>';
+  }
+  function renderTx(){
+    var rows=S.exp.filter(function(e){return (S.cat==="all"||e.cat===S.cat)&&(!S.q||(e.rem+" "+e.cat).toLowerCase().indexOf(S.q)>=0)});
+    var k=S.sort;rows.sort(function(a,b){var x=k==="date"?a.date:k==="amt"?a.amt:k==="cat"?a.cat:a.rem,y=k==="date"?b.date:k==="amt"?b.amt:k==="cat"?b.cat:b.rem;return (x>y?1:x<y?-1:0)*S.dir});
+    $("tbody").innerHTML=rows.length?rows.map(function(e){return '<tr><td>'+esc(e.raw)+'</td><td><span class="pill" style="background:'+colorFor(e.cat)+'">'+esc(e.cat)+'</span></td><td>'+esc(e.rem)+'</td><td class="amt">'+fmt(e.amt)+'</td></tr>'}).join(""):'<tr><td colspan="4" class="empty">No transactions found</td></tr>';
+  }
+  function renderSum(){
+    var rows=(S.sum||[]).slice(1).filter(function(r){return r&&r[0]});
+    if(!rows.length){$("sumbody").innerHTML='<div class="empty">No summary data</div>';return}
+    var tot=rows.filter(function(r){return String(r[0]).toLowerCase()!=="total"});
+    var mx=Math.max.apply(null,tot.map(function(r){return parseFloat(r[1])||0}))||1;
+    $("sumbody").innerHTML=rows.map(function(r){var v=parseFloat(r[1])||0,isT=String(r[0]).toLowerCase()==="total";
+      return '<div class="bar"><span class="n" style="'+(isT?'font-weight:700;color:var(--text)':'')+'">'+esc(r[0])+'</span><span class="t">'+(isT?'':'<b style="width:'+(v/mx*100)+'%;background:'+colorFor(r[0])+'"></b>')+'</span><span class="a" style="'+(isT?'font-weight:700':'')+'">'+fmt(v)+'</span></div>'}).join("");
+  }
+  function renderIns(){
+    var rows=(S.ins||[]).slice(1).filter(function(r){return r&&(r[0]||r[1])});
+    $("insbody").innerHTML=rows.length?rows.reverse().map(function(r){return '<div class="card" style="margin-bottom:12px"><h2>'+esc(r[0])+'</h2><div class="ins">'+esc(r[1])+'</div></div>'}).join(""):'<div class="card"><div class="empty">No insights yet. They appear here once your sheet writes analysis to the Insights tab.</div></div>';
+  }
+  function renderAll(){renderFilters();renderDash();renderTx();renderSum();renderIns()}
+
+  initAuth();
+})();
+</script>
+</body>
+</html>
