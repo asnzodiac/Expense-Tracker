@@ -52,8 +52,8 @@ td.amt,th.amt{text-align:right}
 .bar .a{width:76px;text-align:right}
 .empty{color:var(--muted);font-size:13px;padding:18px;text-align:center}
 .banner{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px;background:#fef3c7;color:#78350f}
-.due{background:#fee2e2;color:#7f1d1d;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px;line-height:1.6}
-.cc{margin-bottom:12px}
+.due{background:#fef3c7;color:#78350f;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px;line-height:1.6}
+.cc{margin-top:12px}
 .cc .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
 .cc .nm{font-weight:700;display:flex;align-items:center;gap:8px}
 .cc .nm i{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -102,7 +102,6 @@ svg text{fill:var(--muted);font-size:10px}
 
     <div class="tabs" id="tabs">
       <div class="tab on" data-t="dash">Dashboard</div>
-      <div class="tab" data-t="cards">Cards</div>
       <div class="tab" data-t="tx">Transactions</div>
       <div class="tab" data-t="sum">Summary</div>
       <div class="tab" data-t="ins">Insights</div>
@@ -111,6 +110,7 @@ svg text{fill:var(--muted);font-size:10px}
     <section id="dash">
       <div class="row" style="margin-bottom:12px"><select id="month"></select></div>
       <div class="grid kpis" id="kpis"></div>
+      <div class="card" id="cardsbox" style="margin-top:12px"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">Credit card bills</h2><button class="btn" id="alerts">🔔 Alerts</button></div><div id="cardsbody"></div></div>
       <div class="grid two" style="margin-top:12px">
         <div class="card"><h2>By category</h2><div id="donut"></div><div class="legend" id="legend"></div></div>
         <div class="card"><h2>Category totals</h2><div id="bars"></div></div>
@@ -121,11 +121,6 @@ svg text{fill:var(--muted);font-size:10px}
       </div>
     </section>
 
-    <section id="cards" hidden>
-      <div class="row" style="margin-bottom:12px"><button class="btn" id="alerts">🔔 Enable alerts</button></div>
-      <div id="cardsbody"></div>
-    </section>
-
     <section id="tx" hidden>
       <div class="card">
         <div class="row" style="margin-bottom:10px">
@@ -133,7 +128,7 @@ svg text{fill:var(--muted);font-size:10px}
           <select id="cat"></select>
         </div>
         <div class="scroll"><table>
-          <thead><tr><th data-s="date">Date</th><th data-s="cat">Category</th><th>Card</th><th data-s="rem">Remarks</th><th class="amt" data-s="amt">Amount</th></tr></thead>
+          <thead><tr><th data-s="date">Date</th><th data-s="cat">Category</th><th data-s="rem">Remarks</th><th class="amt" data-s="amt">Amount</th></tr></thead>
           <tbody id="tbody"></tbody>
         </table></div>
       </div>
@@ -226,7 +221,7 @@ svg text{fill:var(--muted);font-size:10px}
   $("theme").onclick=function(){var r=document.documentElement;var dark=r.getAttribute("data-theme")==="dark"||(r.getAttribute("data-theme")!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.setAttribute("data-theme",dark?"light":"dark")};
   $("tabs").onclick=function(e){var t=e.target.dataset.t;if(!t)return;
     [].forEach.call(document.querySelectorAll(".tab"),function(x){x.classList.toggle("on",x.dataset.t===t)});
-    ["dash","cards","tx","sum","ins"].forEach(function(id){$(id).hidden=id!==t})};
+    ["dash","tx","sum","ins"].forEach(function(id){$(id).hidden=id!==t})};
 
   function parseExp(rows){
     return (rows||[]).slice(1).filter(function(r){return r&&r[0]}).map(function(r){
@@ -299,7 +294,7 @@ svg text{fill:var(--muted);font-size:10px}
   function renderTx(){
     var rows=S.exp.filter(function(e){return (S.cat==="all"||e.cat===S.cat)&&(!S.q||(e.rem+" "+e.cat+" "+e.card).toLowerCase().indexOf(S.q)>=0)});
     var k=S.sort;rows.sort(function(a,b){var x=k==="date"?a.date:k==="amt"?a.amt:k==="cat"?a.cat:a.rem,y=k==="date"?b.date:k==="amt"?b.amt:k==="cat"?b.cat:b.rem;return (x>y?1:x<y?-1:0)*S.dir});
-    $("tbody").innerHTML=rows.length?rows.map(function(e){return '<tr><td>'+esc(e.raw)+'</td><td><span class="pill" style="background:'+colorFor(e.cat)+'">'+esc(e.cat)+'</span></td><td>'+esc(e.card)+'</td><td>'+esc(e.rem)+'</td><td class="amt">'+fmt(e.amt)+'</td></tr>'}).join(""):'<tr><td colspan="5" class="empty">No transactions found</td></tr>';
+    $("tbody").innerHTML=rows.length?rows.map(function(e){return '<tr><td>'+esc(e.raw)+'</td><td><span class="pill" style="background:'+colorFor(e.cat)+'">'+esc(e.cat)+'</span></td><td>'+esc(e.rem)+(cardOf(e)?' <span class="sub">· '+esc(e.card)+'</span>':'')+'</td><td class="amt">'+fmt(e.amt)+'</td></tr>'}).join(""):'<tr><td colspan="4" class="empty">No transactions found</td></tr>';
   }
 
   // ---------- credit cards ----------
@@ -327,8 +322,8 @@ svg text{fill:var(--muted);font-size:10px}
       var mine=all.filter(function(b){return b.c===c});
       var run=mine.filter(function(b){return b.cur}).reduce(function(a,b){return a+b.t},0);
       var past=mine.filter(function(b){return !b.cur});
-      return '<div class="card cc"><div class="hd"><span class="nm"><i style="background:'+c.color+'"></i>'+esc(c.name)+'</span><span class="sub">Bill due on '+c.due+' of next month</span></div>'
-        +'<div class="kpi"><div class="l">This month so far (billed next month)</div><div class="v" style="font-size:22px">'+fmt(run)+'</div></div>'
+      return '<div class="cc"><div class="hd"><span class="nm"><i style="background:'+c.color+'"></i>'+esc(c.name)+'</span><span class="sub">Bill due on '+c.due+' of next month</span></div>'
+        +'<div class="kpi"><div class="l">This month so far (billed next month)</div><div class="v" style="font-size:20px">'+fmt(run)+'</div></div>'
         +(past.length?past.map(function(b){var late=!b.paid&&b.due<new Date();
           return '<div class="bill"><span>'+mlabel(b.m)+' bill · <b>'+fmt(b.t)+'</b><small class="'+(b.paid?'ok':late?'late':'')+'">'+(b.paid?'Paid ✓':dueText(b))+'</small></span><button class="btn'+(b.paid?'':' primary')+'" data-pay="'+esc(b.id)+'">'+(b.paid?'Undo':'Mark paid')+'</button></div>'}).join(""):'<div class="bill"><span class="sub">No past bills yet</span></div>')
         +'</div>';
