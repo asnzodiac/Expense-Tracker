@@ -86,6 +86,7 @@ svg text{fill:var(--muted);font-size:10px}
 code{font-size:12px;word-break:break-all;background:var(--bg);padding:2px 5px;border-radius:6px}
 .hint{font-size:12px;color:var(--muted);line-height:1.5}
 </style>
+<base target="_blank">
 </head>
 <body>
 <div class="wrap">
@@ -149,7 +150,7 @@ var EMOJIS=["🍔","🍕","☕","🛒","🛍️","⛽","🚗","🚌","✈️","�
 // Credit cards: "k" is matched (case-insensitive) inside the wallet name, "due" = day of the NEXT month the bill is due (editable in More)
 var DEF_CARDS=[{k:"amazon",n:"Amazon Pay",c:"#f59e0b",due:15},{k:"tata",n:"Tata Neu",c:"#6366f1",due:10},{k:"scapia",n:"Scapia",c:"#10b981",due:5}];
 var CC_WALLETS=["AMAZON CC","TATA Neo CC","SCAPIA CC"];
-function defaultCfg(){return {currency:"INR",budget:0,cycleDay:1,wallets:["Cash","UPI","Card","Bank"],defWallet:"UPI",cats:DEF_CATS.slice(),recurring:[],cards:DEF_CARDS.map(function(c){return Object.assign({},c)}),paid:{}}}
+function defaultCfg(){return {currency:"INR",budget:0,cycleDay:1,wallets:["Cash","UPI","Card","Bank"],defWallet:"UPI",cats:DEF_CATS.slice(),recurring:[],cards:DEF_CARDS.map(function(c){return Object.assign({},c)}),paid:{},emis:[]}}
 function catInfo(n){return CFG.cats.find(function(c){return c.n===n})||{n:n,e:"🏷️",c:"#64748b"}}
 
 /* ---------- formatting ---------- */
@@ -217,6 +218,7 @@ async function loadCfg(){
   if(!CFG.cats||!CFG.cats.length)CFG.cats=DEF_CATS.slice();
   if(!CFG.cards||!CFG.cards.length)CFG.cards=DEF_CARDS.map(function(c){return Object.assign({},c)});
   if(!CFG.paid)CFG.paid={};
+  if(!CFG.emis)CFG.emis=[];
   if(!CFG.ccInit){ // one-time: make sure the three card wallets exist
     CC_WALLETS.forEach(function(w){if(CFG.wallets.indexOf(w)<0)CFG.wallets.push(w)});
     CFG.ccInit=1;await saveCfg();
@@ -256,6 +258,22 @@ async function runRecurring(){
   if(rows.length){await vapp("Expenses!A:J",rows);await saveCfg();toast(rows.length+" recurring transaction"+(rows.length>1?"s":"")+" added")}
 }
 
+/* ---------- EMI plans ---------- */
+async function runEmis(){
+  var now=new Date(),rows=[],guardG=0;
+  (CFG.emis||[]).forEach(function(e){
+    if(!e.active)return;
+    var p=String(e.start||"").split("-"),y=+p[0],m=((+p[1])||1)-1,guard=0;
+    while((e.count||0)<e.months&&guard++<600&&guardG++<2000){
+      var due=new Date(y,m,1,8,0,0);
+      if(due>now)break;
+      e.count=(e.count||0)+1;
+      rows.push([fmtDate(due),e.amount,"EMI","EMI: "+(e.name||"Plan")+" ("+e.count+"/"+e.months+")",e.wallet||"",CFG.currency,"","","",""]);
+      m++;if(m>11){m=0;y++}
+    }
+  });
+  if(rows.length){await vapp("Expenses!A:J",rows);await saveCfg();toast(rows.length+" EMI installment"+(rows.length>1?"s":"")+" added")}
+}
 /* ---------- credit card bills ---------- */
 function cardOf(t){var s=(t.wallet||"").toLowerCase();for(var i=0;i<CFG.cards.length;i++)if(s.indexOf(CFG.cards[i].k)>=0)return CFG.cards[i];return null}
 function mkey(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)}
@@ -339,7 +357,7 @@ async function boot(){
     await loadMeta();
     if(!meta.Expenses){banner("Couldn't find a tab named <b>Expenses</b> in this sheet.");booting=false;return}
     if(!meta.AppSettings){await batch([{addSheet:{properties:{title:"AppSettings"}}}]);await loadMeta()}
-    await loadCfg();await ensureHeader();await runRecurring();await loadTx();
+    await loadCfg();await ensureHeader();await runRecurring();await runEmis();await loadTx();
     banner("");status("Synced "+new Date().toLocaleTimeString(),true);
     parseParams();render();
     if(PARAMS){var p=PARAMS;PARAMS=null;history.replaceState(null,"",location.pathname);openForm(p)}
@@ -472,7 +490,11 @@ function vMore(el){
   h+='<div class="card"><div class="row between"><h3>Wallets</h3><button class="btn sm" data-a="addwallet">＋ Add</button></div><div class="chips">'+CFG.wallets.map(function(w){return '<span class="chip">'+esc(w)+' <a data-a="delwallet" data-w="'+esc(w)+'" style="margin-left:4px;opacity:.6">✕</a></span>'}).join("")+'</div></div>';
   h+='<div class="card"><div class="row between"><h3>Categories</h3><button class="btn sm" data-a="editcat" data-n="">＋ Add</button></div><div class="chips">'+CFG.cats.map(function(c){return '<span class="chip on" style="background:'+c.c+';border-color:'+c.c+'" data-a="editcat" data-n="'+esc(c.n)+'">'+esc(c.e)+" "+esc(c.n)+'</span>'}).join("")+'</div></div>';
   h+='<div class="card"><div class="row between"><h3>Recurring</h3><button class="btn sm" data-a="editrec" data-id="">＋ Add</button></div>'+((CFG.recurring||[]).length?CFG.recurring.map(function(r){return '<div class="tx" data-a="editrec" data-id="'+r.id+'"><div class="m"><b>'+esc(r.name)+(r.active?"":" (paused)")+'</b><span>Day '+r.day+' · '+esc(r.cat)+' · '+esc(r.wallet||"")+'</span></div><div class="a '+(r.type==="credit"?"good":"")+'">'+fmt(r.amount)+'</div></div>'}).join(""):'<div class="empty">Rent, Netflix, SIP, EMI… add them once and they log themselves whenever you open the app.</div>')+'</div>';
-  h+='<div class="card"><h3>Auto-log from SMS / Back Tap</h3><div class="hint">Web apps can’t read SMS. On iPhone, use Shortcuts: create an automation “When I get a message” (or a Back Tap shortcut) with the action <b>Open URLs</b> pointing here:<br><code>'+esc(url)+'</code><br>Supported parameters: <code>amount</code>, <code>note</code>, <code>cat</code>, <code>wallet</code>, <code>type=credit</code>, <code>sms</code> (full message text, parsed automatically). The add form opens pre-filled.</div><div style="margin-top:8px"><button class="btn sm" data-a="copyurl">Copy link</button></div></div>';
+  h+='<div class="card"><div class="row between"><h3>🏦 EMIs</h3><button class="btn sm" data-a="editemi" data-id="">＋ Add</button></div>'+
+   '<div class="hint" style="margin-bottom:8px">Amount × months. Paying via a credit card? Choose that card wallet — every installment automatically lands on the next month\u2019s card bill.</div>'+
+   ((CFG.emis||[]).length?CFG.emis.map(function(e){var c=e.count||0,done=c>=e.months;
+     return '<div class="tx" data-a="editemi" data-id="'+e.id+'"><div class="m"><b>'+esc(e.name)+(e.active?"":" (paused)")+(done?" \u2713":"")+'</b><span>Monthly \u00B7 '+esc(e.wallet||"")+' \u00B7 '+c+'/'+e.months+' paid</span></div><div class="a">'+fmt(e.amount)+'</div></div>'}).join(""):'<div class="empty">Phone EMI, car loan\u2026 add the plan and installments log themselves on the 1st of each month.</div>')+'</div>';
+h+='<div class="card"><h3>Auto-log from SMS / Back Tap</h3><div class="hint">Web apps can’t read SMS. On iPhone, use Shortcuts: create an automation “When I get a message” (or a Back Tap shortcut) with the action <b>Open URLs</b> pointing here:<br><code>'+esc(url)+'</code><br>Supported parameters: <code>amount</code>, <code>note</code>, <code>cat</code>, <code>wallet</code>, <code>type=credit</code>, <code>sms</code> (full message text, parsed automatically). The add form opens pre-filled.</div><div style="margin-top:8px"><button class="btn sm" data-a="copyurl">Copy link</button></div></div>';
   h+='<div class="card"><h3>Data</h3><div class="row"><button class="btn" data-a="exp-tx">⬇ Transactions CSV</button><button class="btn" data-a="exp-cat">⬇ Categories CSV</button></div><div class="hint" style="margin-top:10px">Your data lives in your own Google Sheet (tabs Expenses and AppSettings), so it survives phone changes. There is no iCloud access from a website; Google’s own sync does that job. Receipt photos are scanned on-device and not stored.</div>'+
    '<label>Sheet ID</label><input value="'+esc(SHEET)+'" data-c="sheet"></div>';
   h+='<div class="card"><button class="btn danger" data-a="signout">Sign out</button></div>';
@@ -627,6 +649,34 @@ async function saveRec(){
   if(i<0){try{await runRecurring();await loadTx();render()}catch(e){}}
 }
 
+function editEmi(id){
+  var e=(CFG.emis||[]).find(function(x){return x.id===id})||{id:"",name:"",amount:"",months:"",wallet:CFG.defWallet,start:new Date().getFullYear()+"-"+pad(new Date().getMonth()+1),count:0,active:true};
+  F.emiEdit=id||null;
+  openModal('<div class="row between"><h3 style="font-size:17px">'+(id?"Edit EMI":"New EMI")+'</h3><button class="btn sm" data-a="close">✕</button></div>'+
+   '<label>Item / loan name</label><input id="e_n" value="'+esc(e.name)+'" placeholder="iPhone EMI, Car loan\u2026">'+
+   '<label>Monthly installment ('+CFG.currency+')</label><input id="e_a" type="number" inputmode="decimal" step="any" value="'+esc(e.amount)+'">'+
+   '<label>Total months (tenure)</label><input id="e_m" type="number" min="1" max="360" value="'+esc(e.months)+'">'+
+   '<label>First installment month</label><input id="e_s" type="month" value="'+esc(e.start)+'">'+
+   '<label>Paid from (wallet)</label><select id="e_w">'+CFG.wallets.map(function(w){return '<option'+(w===e.wallet?" selected":"")+'>'+esc(w)+'</option>'}).join("")+'</select>'+
+   (id?'<div class="sub" style="margin-top:10px">'+(e.count||0)+' of '+e.months+' installments already logged. If you started earlier, adjust the first month and missing ones will be added.</div>':"")+
+   '<label><input type="checkbox" id="e_x" '+(e.active?"checked":"")+'> Active</label>'+
+   '<div class="row" style="margin-top:16px;flex-wrap:nowrap"><button class="btn primary" style="flex:1" data-a="saveemi">Save</button>'+(id?'<button class="btn danger" data-a="delemi">Delete</button>':"")+'</div>');
+}
+async function saveEmi(){
+  var n=$("e_n").value.trim(),a=parseFloat($("e_a").value),m=parseInt($("e_m").value);
+  if(!n||!(a>0)||!(m>0))return toast("Enter name, amount and months");
+  var st=$("e_s").value||new Date().toISOString().slice(0,7);
+  CFG.emis=CFG.emis||[];
+  if(F.emiEdit){
+    var i=CFG.emis.findIndex(function(x){return x.id===F.emiEdit});
+    if(i>=0){var o=CFG.emis[i];o.name=n;o.amount=a;o.months=m;o.wallet=$("e_w").value;o.active=$("e_x").checked;
+      if(o.start!==st){o.start=st;o.count=0} // re-anchor the schedule
+      if((o.count||0)>m)o.count=m;}
+  }else CFG.emis.push({id:"e"+Date.now(),name:n,amount:a,months:m,start:st,wallet:$("e_w").value,count:0,active:$("e_x").checked});
+  await saveCfg();closeModal();render();
+  try{await runEmis();await loadTx();render()}catch(e2){}
+}
+
 /* ---------- export ---------- */
 function csv(rows){return rows.map(function(r){return r.map(function(c){c=c==null?"":String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(",")}).join("\n")}
 function download(name,text){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/csv"}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
@@ -673,6 +723,9 @@ async function act(a,d,el){
     case "pickemoji":$("c_e").value=d.e;break;
     case "savecat":saveCat();break;
     case "delcat":if(CFG.cats.length>1&&confirm("Delete this category? Existing transactions keep the name.")){CFG.cats=CFG.cats.filter(function(c){return c.n!==F.catEdit});await saveCfg();closeModal();render()}break;
+    case "editemi":editEmi(d.id);break;
+    case "saveemi":saveEmi();break;
+    case "delemi":if(confirm("Delete this EMI plan? Logged installments stay in your history.")){CFG.emis=CFG.emis.filter(function(x){return x.id!==F.emiEdit});await saveCfg();closeModal();render()}break;
     case "editrec":editRec(d.id);break;
     case "saverec":saveRec();break;
     case "delrec":if(confirm("Delete this recurring item?")){CFG.recurring=CFG.recurring.filter(function(x){return x.id!==F.recEdit});await saveCfg();closeModal();render()}break;
