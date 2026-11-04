@@ -145,8 +145,8 @@ var token=null,tokenClient=null,timer=null,meta={},CFG=null,TX=[],F={};
 var S={view:"home",pk:"month",off:0,f:{q:"",cat:"all",wallet:"all",month:"all"}};
 var PARAMS=null;
 
-var DEF_CATS=[["Food","🍔","#f59e0b"],["Fuel","⛽","#ef4444"],["Transport","🚗","#06b6d4"],["Shopping","🛍️","#ec4899"],["Bills","🧾","#6366f1"],["Entertainment","🎬","#8b5cf6"],["Health","💊","#10b981"],["Other","🏷️","#64748b"],["SIP","📈","#14b8a6"],["Chitti","🪙","#f97316"],["EMI","🏦","#a855f7"],["Lend","🤝","#84cc16"]].map(function(a){return {n:a[0],e:a[1],c:a[2]}});
-var EMOJIS=["🍔","🍕","☕","🛒","🛍️","⛽","🚗","🚌","✈️","🏠","💡","📱","🎬","🎮","💊","🏥","📚","🎁","💼","🐶","💇","🏋️","🍺","🧾"];
+var DEF_CATS=[["Food","🍱","#f59e0b"],["Fuel","⛽","#ef4444"],["Transport","🚗","#06b6d4"],["Shopping","🛍️","#ec4899"],["Bills","🧾","#6366f1"],["Entertainment","🎬","#8b5cf6"],["Health","💊","#10b981"],["Other","🏷️","#64748b"],["SIP","📈","#14b8a6"],["Chitti","🪙","#f97316"],["EMI","🏦","#a855f7"],["Lend","🤝","#84cc16"]].map(function(a){return {n:a[0],e:a[1],c:a[2]}});
+var EMOJIS=["🍱","🍕","☕","🛒","🛍️","⛽","🚗","🚌","✈️","🏠","💡","📱","🎬","🎮","💊","🏥","📚","🎁","💼","🐶","💇","🏋️","🍺","🧾"];
 // Credit cards: "k" is matched (case-insensitive) inside the wallet name, "due" = day of the NEXT month the bill is due (editable in More)
 var DEF_CARDS=[{k:"amazon",n:"Amazon Pay",c:"#f59e0b",due:15},{k:"tata",n:"Tata Neu",c:"#6366f1",due:10},{k:"scapia",n:"Scapia",c:"#10b981",due:5}];
 var CC_WALLETS=["AMAZON CC","TATA Neo CC","SCAPIA CC"];
