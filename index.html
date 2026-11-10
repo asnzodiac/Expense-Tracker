@@ -13,9 +13,9 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8}}
 :root[data-theme="dark"]{--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8}
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px)}
-.wrap{max-width:900px;margin:0 auto;padding:14px 14px 110px}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px)}
+.wrap{flex:1 1 auto;min-height:0;width:100%;max-width:900px;margin:0 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 14px 100px}
 header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 h1{font-size:19px;margin:0}
 h3{margin:0 0 8px;font-size:14px}
@@ -67,16 +67,16 @@ label{font-size:12px;color:var(--muted);display:block;margin:10px 0 4px}
 .ccdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px}
 .dot.live{background:var(--good)}
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
+nav{position:relative;flex:none;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
 nav button{flex:1;border:0;background:none;color:var(--muted);font-size:11px;padding:4px;cursor:pointer}
 nav button span{display:block;font-size:20px}
 nav button.on{color:var(--accent);font-weight:700}
-.fab{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:25;cursor:pointer}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none;align-items:flex-end;justify-content:center}
+.fab{position:absolute;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:25;cursor:pointer}
+#modal{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none;align-items:flex-end;justify-content:center}
 #modal.open{display:flex}
-.sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:92%;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
 .big{font-size:28px;font-weight:700}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:#111;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:#111;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
 .toast.show{opacity:1}
 svg{max-width:100%;height:auto;display:block}
 svg text{fill:var(--muted);font-size:10px}
@@ -89,7 +89,7 @@ code{font-size:12px;word-break:break-all;background:var(--bg);padding:2px 5px;bo
 <base target="_blank">
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="scroller">
 
   <div id="login">
     <div style="font-size:52px">💸</div>
@@ -143,7 +143,7 @@ var load=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
 var SHEET=load("xp_sheet")||DEFAULT_SHEET;
 var token=null,tokenClient=null,timer=null,meta={},CFG=null,TX=[],F={};
 var S={view:"home",pk:"month",off:0,f:{q:"",cat:"all",wallet:"all",month:"all"}};
-var PARAMS=null;
+
 
 var DEF_CATS=[["Food","🍱","#f59e0b"],["Fuel","⛽","#ef4444"],["Transport","🚗","#06b6d4"],["Shopping","🛍️","#ec4899"],["Bills","🧾","#6366f1"],["Entertainment","🎬","#8b5cf6"],["Health","💊","#10b981"],["Other","🏷️","#64748b"],["SIP","📈","#14b8a6"],["Chitti","🪙","#f97316"],["EMI","🏦","#a855f7"],["Lend","🤝","#84cc16"]].map(function(a){return {n:a[0],e:a[1],c:a[2]}});
 var EMOJIS=["🍱","🍕","☕","🛒","🛍️","⛽","🚗","🚌","✈️","🏠","💡","📱","🎬","🎮","💊","🏥","📚","🎁","💼","🐶","💇","🏋️","🍺","🧾"];
@@ -359,8 +359,8 @@ async function boot(){
     if(!meta.AppSettings){await batch([{addSheet:{properties:{title:"AppSettings"}}}]);await loadMeta()}
     await loadCfg();await ensureHeader();await runRecurring();await runEmis();await loadTx();
     banner("");status("Synced "+new Date().toLocaleTimeString(),true);
-    parseParams();render();
-    if(PARAMS){var p=PARAMS;PARAMS=null;history.replaceState(null,"",location.pathname);openForm(p)}
+    render();
+    
   }catch(e){
     status("Not synced",false);
     var m=String(e.message||"");
@@ -376,11 +376,6 @@ async function refresh(quiet){
 setInterval(function(){if(token&&!document.hidden&&!$("modal").classList.contains("open"))refresh(true)},60000);
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&token)refresh(true)});
 
-function parseParams(){
-  var q=new URLSearchParams(location.search);
-  if(!q.has("amount")&&!q.has("add")&&!q.has("sms"))return;
-  PARAMS={amount:q.get("amount")||"",note:q.get("note")||q.get("merchant")||"",cat:q.get("cat")||"",wallet:q.get("wallet")||"",type:q.get("type")==="credit"?"credit":"expense",sms:q.get("sms")||""};
-}
 
 /* ---------- rendering ---------- */
 function render(){
@@ -400,7 +395,7 @@ function vHome(el){
   var net=sumEff(list),total=daysBetween(s,e),el2=Math.max(1,Math.min(total,daysBetween(s,new Date())+1)),burn=net/el2,proj=burn*total;
   var ps=periodRange("month",-1),prev=sumEff(TX.filter(function(t){return inRange(t,ps[0],ps[1])}));
   var pct=CFG.budget>0?Math.min(100,Math.max(0,net/CFG.budget*100)):0,col=pct>=100?"var(--bad)":pct>=80?"var(--warn)":"var(--good)";
-  var wal={};list.forEach(function(t){var w=t.wallet||"—";wal[w]=(wal[w]||0)+eff(t)});
+  var wal={};list.forEach(function(t){var w=t.wallet||"No wallet";wal[w]=(wal[w]||0)+eff(t)});
   var h='<div class="card"><div class="sub">'+(CFG.cycleDay>1?"Budget cycle":"This month")+" · "+rangeLabel("month",s,e)+'</div><div class="big">'+fmt(net)+'</div>';
   if(CFG.budget>0)h+='<div class="prog"><b style="width:'+pct+'%;background:'+col+'"></b></div><div class="sub">'+(net>CFG.budget?'<span class="bad">Over budget by '+fmt(net-CFG.budget)+'</span>':fmt(CFG.budget-net)+' left of '+fmt(CFG.budget))+'</div>';
   else h+='<div class="sub" style="margin-top:6px">Set a monthly budget in More ⚙️</div>';
@@ -464,7 +459,7 @@ function vStats(el){
   var bc={};list.forEach(function(t){bc[t.cat]=(bc[t.cat]||0)+eff(t)});
   var cats=Object.keys(bc).filter(function(c){return Math.abs(bc[c])>0.001}).sort(function(a,b){return bc[b]-bc[a]}),mx=Math.max.apply(null,cats.map(function(c){return Math.abs(bc[c])}))||1;
   h+='<div class="card"><h3>Categories <span class="muted" style="font-weight:400">· tap to see receipts</span></h3>'+(cats.length?cats.map(function(c){var ci=catInfo(c);return '<div class="bar" data-a="drill" data-cat="'+esc(c)+'"><span class="n">'+esc(ci.e)+" "+esc(c)+'</span><span class="t"><b style="width:'+Math.abs(bc[c])/mx*100+'%;background:'+ci.c+'"></b></span><span class="a '+(bc[c]<0?"good":"")+'">'+fmt(bc[c])+'</span></div>'}).join(""):'<div class="empty">No transactions in this period</div>')+'</div>';
-  var bw={};list.forEach(function(t){var w=t.wallet||"—";bw[w]=(bw[w]||0)+eff(t)});
+  var bw={};list.forEach(function(t){var w=t.wallet||"No wallet";bw[w]=(bw[w]||0)+eff(t)});
   if(Object.keys(bw).length)h+='<div class="card"><h3>Wallets</h3><div class="chips">'+Object.keys(bw).map(function(w){return '<span class="chip">'+esc(w)+' · '+fmt(bw[w])+'</span>'}).join("")+'</div></div>';
   el.innerHTML=h;
 }
@@ -479,7 +474,6 @@ function vLedger(el){
   el.innerHTML=h;
 }
 function vMore(el){
-  var url=location.origin+location.pathname+"?amount=250&note=Lunch&cat=Food&wallet=UPI";
   var h='<div class="card"><h3>Budget & currency</h3><label>Base currency</label><select data-c="cur">'+curOptions(CFG.currency)+'</select>'+
    '<label>Monthly budget ('+CFG.currency+')</label><input type="number" inputmode="decimal" value="'+(CFG.budget||"")+'" data-c="budget" placeholder="0 = no budget">'+
    '<label>Budget cycle starts on day (e.g. 1, 5 or 28)</label><input type="number" min="1" max="31" value="'+CFG.cycleDay+'" data-c="cycle">'+
@@ -494,7 +488,6 @@ function vMore(el){
    '<div class="hint" style="margin-bottom:8px">Amount × months. Paying via a credit card? Choose that card wallet — every installment automatically lands on the next month\u2019s card bill.</div>'+
    ((CFG.emis||[]).length?CFG.emis.map(function(e){var c=e.count||0,done=c>=e.months;
      return '<div class="tx" data-a="editemi" data-id="'+e.id+'"><div class="m"><b>'+esc(e.name)+(e.active?"":" (paused)")+(done?" \u2713":"")+'</b><span>Monthly \u00B7 '+esc(e.wallet||"")+' \u00B7 '+c+'/'+e.months+' paid</span></div><div class="a">'+fmt(e.amount)+'</div></div>'}).join(""):'<div class="empty">Phone EMI, car loan\u2026 add the plan and installments log themselves on the 1st of each month.</div>')+'</div>';
-h+='<div class="card"><h3>Auto-log from SMS / Back Tap</h3><div class="hint">Web apps can’t read SMS. On iPhone, use Shortcuts: create an automation “When I get a message” (or a Back Tap shortcut) with the action <b>Open URLs</b> pointing here:<br><code>'+esc(url)+'</code><br>Supported parameters: <code>amount</code>, <code>note</code>, <code>cat</code>, <code>wallet</code>, <code>type=credit</code>, <code>sms</code> (full message text, parsed automatically). The add form opens pre-filled.</div><div style="margin-top:8px"><button class="btn sm" data-a="copyurl">Copy link</button></div></div>';
   h+='<div class="card"><h3>Data</h3><div class="row"><button class="btn" data-a="exp-tx">⬇ Transactions CSV</button><button class="btn" data-a="exp-cat">⬇ Categories CSV</button></div><div class="hint" style="margin-top:10px">Your data lives in your own Google Sheet (tabs Expenses and AppSettings), so it survives phone changes. There is no iCloud access from a website; Google’s own sync does that job. Receipt photos are scanned on-device and not stored.</div>'+
    '<label>Sheet ID</label><input value="'+esc(SHEET)+'" data-c="sheet"></div>';
   h+='<div class="card"><button class="btn danger" data-a="signout">Sign out</button></div>';
@@ -684,7 +677,7 @@ function download(name,text){var a=document.createElement("a");a.href=URL.create
 /* ---------- events ---------- */
 async function act(a,d,el){
   switch(a){
-    case "nav":S.view=d.v;render();window.scrollTo(0,0);break;
+    case "nav":S.view=d.v;render();$("scroller").scrollTop=0;break;
     case "theme":var r=document.documentElement,dark=r.getAttribute("data-theme")==="dark"||(r.getAttribute("data-theme")!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.setAttribute("data-theme",dark?"light":"dark");break;
     case "refresh":refresh();break;
     case "add":openForm();break;
@@ -729,7 +722,6 @@ async function act(a,d,el){
     case "editrec":editRec(d.id);break;
     case "saverec":saveRec();break;
     case "delrec":if(confirm("Delete this recurring item?")){CFG.recurring=CFG.recurring.filter(function(x){return x.id!==F.recEdit});await saveCfg();closeModal();render()}break;
-    case "copyurl":try{await navigator.clipboard.writeText(location.origin+location.pathname+"?amount=250&note=Lunch&cat=Food&wallet=UPI");toast("Copied")}catch(e){toast("Copy failed")}break;
     case "exp-tx":download("transactions.csv",csv([["Date","Amount","Type","Category","Remarks","Wallet","Currency","OrigAmount","Owed","Person","Settled"]].concat(TX.slice().reverse().map(function(t){return [fmtDate(t.date),t.amt,t.amt<0?"Credit":"Expense",t.cat,t.note,t.wallet,t.cur,t.orig==null?"":t.orig,t.owed||"",t.person,t.settled?"Y":""]}))));break;
     case "exp-cat":download("categories.csv",csv([["Name","Emoji","Color"]].concat(CFG.cats.map(function(c){return [c.n,c.e,c.c]}))));break;
     case "signout":logout();break;
