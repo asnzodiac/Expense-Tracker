@@ -1,79 +1,251 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Thailand">
 <title>Thailand Trip Expenses</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇭</text></svg>">
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--text:#1b1f2a;--muted:#6b7385;--line:#e6e9f2;--accent:#4f46e5;--good:#10b981;--bad:#ef4444}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 40px}
-.wrap{max-width:640px;margin:0 auto;padding:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.cash{background:var(--accent);color:#fff;border:0}.cash .v{font-size:34px;font-weight:700}.cash .s{opacity:.85;font-size:13px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.k{font-size:12px;color:var(--muted)}.v{font-size:20px;font-weight:700}
+:root{--bg:#f6f7fb;--card:#fff;--text:#1b1f2a;--muted:#6b7385;--line:#e6e9f2;--accent:#4f46e5;--good:#10b981;--bad:#ef4444;--warn:#f59e0b}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8}}
+:root[data-theme="dark"]{--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px)}
+.wrap{flex:1 1 auto;min-height:0;width:100%;max-width:900px;margin:0 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 14px 100px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+h1{font-size:19px;margin:0}h3{margin:0 0 8px;font-size:14px}
+.sub{font-size:12px;color:var(--muted)}
+.btn{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:5px 9px;font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.between{justify-content:space-between}
+.grid{display:grid;gap:10px}.kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.kpi .l{font-size:12px;color:var(--muted)}.kpi .v{font-size:20px;font-weight:700;margin-top:2px}
+.good{color:var(--good)}.bad{color:var(--bad)}.muted{color:var(--muted)}
+input,select,textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:16px;width:100%;font-family:inherit}
 label{font-size:12px;color:var(--muted);display:block;margin:10px 0 4px}
-input,select{width:100%;padding:10px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
-.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{flex:1;padding:10px;border:0;background:var(--card);color:var(--muted);font-size:14px}.seg button.on{background:var(--accent);color:#fff}
-.btn{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:600}
-.tx{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.tx:last-child{border:0}
-.tx small{display:block;color:var(--muted);font-size:12px}.tx .a{text-align:right;font-weight:600;white-space:nowrap}
-.x{background:none;border:0;color:var(--bad);font-size:12px;padding:0}
-.st{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}h3{margin:0 0 8px;font-size:14px}
-</style></head><body><div class="wrap">
-
-<!-- Paste your Apps Script Web App URL below (see setup steps) -->
-<script>var SCRIPT_URL="";var CASH_START=10000;</script>
-
-<div class="card cash"><div class="s">Cash left</div><div class="v" id="cashLeft">฿0</div><div class="s" id="cashSub"></div></div>
-
-<div class="grid">
- <div class="card"><div class="k">Luke spent (his share)</div><div class="v" id="lukeShare">฿0</div><div class="k" style="margin-top:6px">Luke CC paid</div><div id="lukePaid" style="font-weight:600">฿0</div></div>
- <div class="card"><div class="k">Aswin spent (his share)</div><div class="v" id="aswinShare">฿0</div><div class="k" style="margin-top:6px">Aswin CC paid</div><div id="aswinPaid" style="font-weight:600">฿0</div></div>
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;padding:9px;border:0;background:var(--card);color:var(--muted);font-size:14px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 10px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-size:13px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tx{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.tx:last-child{border-bottom:0}
+.ico{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.tx .m{flex:1;min-width:0}
+.tx .m b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .m span{font-size:12px;color:var(--muted)}
+.tx .a{text-align:right;font-weight:600;font-size:14px;white-space:nowrap}
+.tx .a small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.dayh{font-size:12px;color:var(--muted);margin:12px 0 2px;font-weight:600}
+.prog{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0}
+.prog b{display:block;height:100%;border-radius:6px}
+.empty{color:var(--muted);font-size:13px;padding:16px;text-align:center}
+.banner{padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px;background:#fef3c7;color:#78350f;line-height:1.5}
+.banner input{margin-top:8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px}.dot.live{background:var(--good)}
+nav{position:relative;flex:none;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
+nav button{flex:1;border:0;background:none;color:var(--muted);font-size:11px;padding:4px;cursor:pointer}
+nav button span{display:block;font-size:20px}nav button.on{color:var(--accent);font-weight:700}
+.fab{position:absolute;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:25;cursor:pointer}
+#modal{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none;align-items:flex-end;justify-content:center}
+#modal.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:92%;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.big{font-size:34px;font-weight:700}
+.cashcard{background:var(--accent);border-color:var(--accent);color:#fff}
+.cashcard .sub{color:rgba(255,255,255,.8)}.cashcard .prog{background:rgba(255,255,255,.25)}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:#111;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
+.toast.show{opacity:1}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+[hidden]{display:none!important}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="wrap" id="scroller">
+  <header>
+    <div><h1>🇹🇭 Thailand Trip</h1><div class="sub"><span id="dot" class="dot"></span><span id="status">Loading…</span></div></div>
+    <div class="row"><a class="btn sm" id="sheetLink" href="#" hidden>📄 Sheet</a><button class="btn sm" data-a="theme">🌓</button><button class="btn sm" data-a="refresh">↻</button></div>
+  </header>
+  <div id="banner"></div>
+  <div id="view"></div>
 </div>
-<div class="card"><div class="k">Total trip spend</div><div class="v" id="total">฿0</div><div class="k" id="settle" style="margin-top:6px"></div></div>
+<button class="fab" data-a="add">＋</button>
+<nav>
+  <button data-a="nav" data-v="home"><span>🏠</span>Home</button>
+  <button data-a="nav" data-v="txns"><span>🧾</span>Expenses</button>
+</nav>
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
 
-<div class="card"><h3>Add expense</h3>
- <label>Description</label><input id="desc" placeholder="Dinner, Grab, hotel…">
- <label>Amount (฿ THB)</label><input id="amt" type="number" inputmode="decimal" placeholder="0">
- <label>Paid with</label>
- <div class="seg" id="payer"><button data-v="Luke CC" class="on">Luke CC</button><button data-v="Aswin CC">Aswin CC</button><button data-v="Cash">Cash</button></div>
- <label>Date</label><input id="date" type="date">
- <label>Luke's share (฿) — leave blank for 50:50</label><input id="ls" type="number" inputmode="decimal" placeholder="blank = split equally">
- <label>Aswin's share (฿) — auto-fills the rest</label><input id="as" type="number" inputmode="decimal" placeholder="blank = split equally">
- <button class="btn" id="add">Add expense</button><div class="st" id="status"></div>
-</div>
-<div class="card"><h3>Expenses</h3><div id="list"></div><div class="st"><a id="sheetLink" href="#" target="_blank" style="color:var(--accent);display:none">Open spreadsheet</a></div></div>
-</div>
 <script>
-var $=function(i){return document.getElementById(i)},TX=[],payer="Luke CC";
-var fmt=function(n){return "฿"+(Math.round(n*100)/100).toLocaleString()};
-function loadLocal(){try{TX=JSON.parse(localStorage.getItem("th_tx")||"[]")}catch(e){TX=[]}}
-function saveLocal(){try{localStorage.setItem("th_tx",JSON.stringify(TX))}catch(e){}}
-function post(o){if(!SCRIPT_URL)return;fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(o)}).then(function(){$("status").textContent="Synced ✓"}).catch(function(){$("status").textContent="Sync failed (saved on this device)"})}
-function pull(){if(!SCRIPT_URL){$("status").textContent="Offline mode: add Apps Script URL to sync to a spreadsheet";return}
- fetch(SCRIPT_URL).then(function(r){return r.json()}).then(function(j){TX=j.rows;saveLocal();render();if(j.url){$("sheetLink").href=j.url;$("sheetLink").style.display="inline"}$("status").textContent="Synced ✓"}).catch(function(){$("status").textContent="Couldn't reach sheet, showing saved data"})}
+(function(){
+"use strict";
+/* ===== SETTINGS ===== */
+var SCRIPT_URL="";            // paste your Apps Script Web App URL here (ends in /exec)
+var CASH_START=10000;         // starting cash in THB
+var PAYERS=["Luke CC","Aswin CC","Cash"];
+/* ==================== */
+var $=function(id){return document.getElementById(id)};
+var esc=function(s){var d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML};
+var store=function(k,v){try{localStorage.setItem(k,v)}catch(e){}};
+var load=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
+var URL_=SCRIPT_URL||load("th_url")||"";
+var TX=[],sheetUrl=load("th_sheet")||"",S={view:"home",payer:"all"},F={},pending=0;
+try{TX=JSON.parse(load("th_tx")||"[]")}catch(e){TX=[]}
+
+function r2(n){return Math.round(n*100)/100}
+function pad(n){return String(n).padStart(2,"0")}
+function fmt(n){return "฿"+(r2(n||0)).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:2})}
+function today(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove("show")},2400)}
+function status(m,l){$("status").textContent=m;$("dot").className="dot"+(l?" live":"")}
+function banner(h){$("banner").innerHTML=h?'<div class="banner">'+h+'</div>':""}
+function icon(p){return p==="Cash"?"💵":"💳"}
+function saveLocal(){store("th_tx",JSON.stringify(TX))}
+function sortTx(){TX.forEach(function(t,i){if(t.seq==null)t.seq=i});TX.sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:b.seq-a.seq})}
+
+/* ---------- sync with Google Sheet via Apps Script ---------- */
+function send(o){
+  if(!URL_)return Promise.resolve();
+  pending++;
+  return fetch(URL_,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(o)})
+    .then(function(){status("Synced ✓",true)})
+    .catch(function(){status("Saved on this device, sync failed",false)})
+    .then(function(){pending--})
+}
+function pull(){
+  if(!URL_){status("Offline mode",false);showUrlBanner();return}
+  if(pending>0)return;
+  fetch(URL_).then(function(r){return r.json()}).then(function(j){
+    if(pending>0)return;
+    TX=(j.rows||[]).map(function(r,i){r.seq=i;return r});sortTx();saveLocal();
+    if(j.url){sheetUrl=j.url;store("th_sheet",j.url);$("sheetLink").href=j.url;$("sheetLink").hidden=false}
+    banner("");status("Synced "+new Date().toLocaleTimeString(),true);if(!$("modal").classList.contains("open"))render();
+  }).catch(function(){status("Couldn't reach sheet, showing saved data",false)});
+}
+function showUrlBanner(){
+  banner('Paste your Apps Script Web App URL to sync with the spreadsheet:<input id="urlin" placeholder="https://script.google.com/macros/s/…/exec"><button class="btn sm primary" style="margin-top:8px" data-a="saveurl">Save</button>');
+}
+
+/* ---------- totals ---------- */
+function totals(){
+  var o={total:0,cash:0,lukeShare:0,aswinShare:0,lukeCC:0,aswinCC:0,owedByLuke:0,owedByAswin:0};
+  TX.forEach(function(t){
+    o.total+=t.amount;o.lukeShare+=t.luke;o.aswinShare+=t.aswin;
+    if(t.payer==="Cash")o.cash+=t.amount;
+    else if(t.payer==="Luke CC"){o.lukeCC+=t.amount;o.owedByAswin+=t.aswin}
+    else if(t.payer==="Aswin CC"){o.aswinCC+=t.amount;o.owedByLuke+=t.luke}
+  });
+  o.left=CASH_START-o.cash;o.net=o.owedByLuke-o.owedByAswin; // >0: Luke owes Aswin
+  return o;
+}
+
+/* ---------- rendering ---------- */
 function render(){
- var cashSpent=0,lp=0,ap=0,ls=0,as=0,tot=0;
- TX.forEach(function(t){tot+=t.amount;ls+=t.luke;as+=t.aswin;if(t.payer==="Cash")cashSpent+=t.amount;else if(t.payer==="Luke CC")lp+=t.amount;else ap+=t.amount});
- var left=CASH_START-cashSpent;$("cashLeft").textContent=fmt(left);$("cashSub").textContent="of "+fmt(CASH_START)+" · spent "+fmt(cashSpent);
- $("lukeShare").textContent=fmt(ls);$("aswinShare").textContent=fmt(as);$("lukePaid").textContent=fmt(lp);$("aswinPaid").textContent=fmt(ap);$("total").textContent=fmt(tot);
- // card settlement: what each paid by card vs their share (cash treated as a shared pot, ignored)
- var lNet=(lp+0)-0,cardLuke=0,cardAswin=0;
- TX.forEach(function(t){if(t.payer==="Luke CC"){cardLuke+=t.aswin}else if(t.payer==="Aswin CC"){cardAswin+=t.luke}});
- var d=cardAswin-cardLuke;$("settle").textContent=Math.abs(d)<0.5?"Card spending is settled":(d>0?"Luke owes Aswin "+fmt(d):"Aswin owes Luke "+fmt(-d))+" (card expenses only)";
- $("list").innerHTML=TX.length?TX.slice().reverse().map(function(t){return '<div class="tx"><div>'+esc(t.desc)+'<small>'+t.date+' · '+t.payer+' · L '+fmt(t.luke)+' / A '+fmt(t.aswin)+'</small></div><div class="a">'+fmt(t.amount)+'<br><button class="x" data-id="'+t.id+'">delete</button></div></div>'}).join(""):'<div class="st">No expenses yet</div>'}
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-document.querySelectorAll("#payer button").forEach(function(b){b.onclick=function(){payer=b.dataset.v;document.querySelectorAll("#payer button").forEach(function(x){x.classList.toggle("on",x===b)})}});
-$("ls").oninput=function(){var a=parseFloat($("amt").value)||0,l=parseFloat($("ls").value);$("as").value=isNaN(l)?"":Math.max(0,Math.round((a-l)*100)/100)};
-$("as").oninput=function(){var a=parseFloat($("amt").value)||0,v=parseFloat($("as").value);$("ls").value=isNaN(v)?"":Math.max(0,Math.round((a-v)*100)/100)};
-$("add").onclick=function(){
- var a=parseFloat($("amt").value);if(!(a>0)){alert("Enter an amount");return}
- var l=parseFloat($("ls").value),s=parseFloat($("as").value);
- if(isNaN(l)&&isNaN(s)){l=a/2;s=a/2}else if(isNaN(s))s=a-l;else if(isNaN(l))l=a-s;
- if(Math.abs(l+s-a)>0.01){alert("Shares must add up to the amount");return}
- var t={id:Date.now().toString(36),date:$("date").value,desc:$("desc").value||"Expense",amount:a,payer:payer,luke:Math.round(l*100)/100,aswin:Math.round(s*100)/100};
- TX.push(t);saveLocal();render();post(Object.assign({action:"add"},t));
- $("desc").value=$("amt").value=$("ls").value=$("as").value=""};
-$("list").onclick=function(e){var id=e.target.dataset&&e.target.dataset.id;if(!id||!confirm("Delete this expense?"))return;TX=TX.filter(function(t){return t.id!==id});saveLocal();render();post({action:"delete",id:id})};
-$("date").value=new Date().toISOString().slice(0,10);loadLocal();render();pull();
-</script></body></html>
+  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v===S.view)});
+  (S.view==="home"?vHome:vTx)($("view"));
+}
+function txRow(t){
+  return '<div class="tx" data-a="edit" data-id="'+esc(t.id)+'"><div class="ico" style="background:'+(t.payer==="Cash"?"#10b98122":"#4f46e522")+'">'+icon(t.payer)+'</div><div class="m"><b>'+esc(t.desc)+'</b><span>'+esc(t.payer)+' · '+esc(t.date)+'</span></div><div class="a">'+fmt(t.amount)+'<small>L '+fmt(t.luke)+' · A '+fmt(t.aswin)+'</small></div></div>';
+}
+function vHome(el){
+  var T=totals(),pct=Math.min(100,Math.max(0,T.left/CASH_START*100)),low=T.left<CASH_START*0.2;
+  var settle=Math.abs(T.net)<0.5?"Card spending is settled":(T.net>0?"Luke owes Aswin "+fmt(T.net):"Aswin owes Luke "+fmt(-T.net))+" (card expenses)";
+  var h='<div class="card cashcard"><div class="sub">Cash left</div><div class="big">'+fmt(T.left)+'</div><div class="prog"><b style="width:'+pct+'%;background:'+(low?"#fecaca":"#fff")+'"></b></div><div class="sub">of '+fmt(CASH_START)+' · spent '+fmt(T.cash)+'</div></div>'+
+  '<div class="grid kpis"><div class="card kpi"><div class="l">Luke spent (share)</div><div class="v">'+fmt(T.lukeShare)+'</div><div class="sub">Luke CC paid '+fmt(T.lukeCC)+'</div></div>'+
+  '<div class="card kpi"><div class="l">Aswin spent (share)</div><div class="v">'+fmt(T.aswinShare)+'</div><div class="sub">Aswin CC paid '+fmt(T.aswinCC)+'</div></div></div>'+
+  '<div class="card kpi"><div class="l">Total trip spend</div><div class="v">'+fmt(T.total)+'</div><div class="sub" style="margin-top:4px">'+settle+'</div></div>'+
+  '<div class="card"><h3>Recent</h3>'+(TX.length?TX.slice(0,8).map(txRow).join(""):'<div class="empty">No expenses yet. Tap ＋ to add one.</div>')+'</div>';
+  el.innerHTML=h;
+}
+function vTx(el){
+  var list=TX.filter(function(t){return S.payer==="all"||t.payer===S.payer}),sum=list.reduce(function(a,t){return a+t.amount},0);
+  var h='<div class="card"><div class="chips">'+["all"].concat(PAYERS).map(function(p){return '<span class="chip'+(S.payer===p?" on":"")+'" data-a="pf" data-p="'+p+'">'+(p==="all"?"All":p)+'</span>'}).join("")+'</div><div class="sub" style="margin-top:8px">'+list.length+' expenses · '+fmt(sum)+'</div></div><div class="card">';
+  if(!list.length)h+='<div class="empty">No expenses found</div>';
+  else{var last="";list.forEach(function(t){if(t.date!==last){h+='<div class="dayh">'+esc(t.date)+'</div>';last=t.date}h+=txRow(t)})}
+  el.innerHTML=h+'</div>';
+}
+
+/* ---------- add / edit form ---------- */
+function openForm(t){
+  t=t||{};var editing=!!t.id;
+  F={id:editing?t.id:null,payer:t.payer||"Luke CC",seq:t.seq,last:null};
+  $("sheet").innerHTML='<div class="row between"><h3 style="font-size:17px">'+(editing?"Edit expense":"New expense")+'</h3><button class="btn sm" data-a="close">✕</button></div>'+
+  '<label>Amount (฿ THB)</label><input id="f_amt" type="number" inputmode="decimal" step="any" value="'+(editing?t.amount:"")+'" placeholder="0" style="font-size:24px;font-weight:700">'+
+  '<label>Description</label><input id="f_desc" value="'+esc(editing?t.desc:"")+'" placeholder="Dinner, Grab, hotel…">'+
+  '<label>Paid with</label><div class="seg" id="f_payer">'+PAYERS.map(function(p){return '<button data-a="fpayer" data-p="'+p+'" class="'+(F.payer===p?"on":"")+'">'+p+'</button>'}).join("")+'</div>'+
+  '<label>Date</label><input id="f_date" type="date" value="'+(editing?t.date:today())+'">'+
+  '<label>Split (leave both blank for 50:50)</label><div class="row" style="flex-wrap:nowrap"><input id="f_l" type="number" inputmode="decimal" step="any" placeholder="Luke ฿" value="'+(editing?t.luke:"")+'"><input id="f_a" type="number" inputmode="decimal" step="any" placeholder="Aswin ฿" value="'+(editing?t.aswin:"")+'"></div><div class="hint" id="f_prev" style="margin-top:6px"></div>'+
+  '<div class="row" style="margin-top:16px;flex-wrap:nowrap"><button class="btn primary" style="flex:1;padding:13px" data-a="save">'+(editing?"Save changes":"Add expense")+'</button>'+(editing?'<button class="btn danger" data-a="del">Delete</button>':"")+'</div>';
+  $("modal").classList.add("open");preview();
+  if(!editing)setTimeout(function(){$("f_amt").focus()},60);
+}
+function preview(){
+  var a=parseFloat($("f_amt").value)||0,l=$("f_l").value,s=$("f_a").value;
+  $("f_prev").textContent=(l===""&&s==="")?(a>0?"50:50 → "+fmt(a/2)+" each":""):"";
+}
+function syncShares(src){
+  var a=parseFloat($("f_amt").value)||0;
+  if(src)F.last=src;
+  if(F.last==="l"&&$("f_l").value!=="")$("f_a").value=Math.max(0,r2(a-parseFloat($("f_l").value)||0));
+  if(F.last==="a"&&$("f_a").value!=="")$("f_l").value=Math.max(0,r2(a-parseFloat($("f_a").value)||0));
+  if(src&&$("f_l").value===""&&$("f_a").value==="")F.last=null;
+  preview();
+}
+function saveForm(){
+  var a=parseFloat($("f_amt").value);if(!(a>0))return toast("Enter an amount");
+  var l=$("f_l").value===""?NaN:parseFloat($("f_l").value),s=$("f_a").value===""?NaN:parseFloat($("f_a").value);
+  if(isNaN(l)&&isNaN(s)){l=a/2;s=a-l}else if(isNaN(s))s=a-l;else if(isNaN(l))l=a-s;
+  l=r2(l);s=r2(s);
+  if(l<0||s<0||Math.abs(l+s-a)>0.01)return toast("Shares must add up to the amount");
+  var t={id:F.id||(Date.now().toString(36)+Math.random().toString(36).slice(2,5)),date:$("f_date").value||today(),desc:$("f_desc").value.trim()||"Expense",amount:r2(a),payer:F.payer,luke:l,aswin:s};
+  var action=F.id?"update":"add";
+  if(F.id){var i=TX.findIndex(function(x){return x.id===F.id});t.seq=F.seq;if(i>=0)TX[i]=t}else{t.seq=TX.length?Math.max.apply(null,TX.map(function(x){return x.seq||0}))+1:0;TX.push(t)}
+  sortTx();saveLocal();$("modal").classList.remove("open");render();toast("Saved");
+  send(Object.assign({action:action},t)).then(pull);
+}
+function del(){
+  if(!F.id||!confirm("Delete this expense?"))return;
+  var id=F.id;TX=TX.filter(function(t){return t.id!==id});saveLocal();$("modal").classList.remove("open");render();toast("Deleted");
+  send({action:"delete",id:id}).then(pull);
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",function(e){
+  var el=e.target.closest("[data-a]");if(!el){if(e.target===$("modal"))$("modal").classList.remove("open");return}
+  var d=el.dataset;
+  switch(d.a){
+    case "nav":S.view=d.v;render();$("scroller").scrollTop=0;break;
+    case "add":openForm();break;
+    case "edit":openForm(TX.find(function(t){return t.id===d.id}));break;
+    case "close":$("modal").classList.remove("open");break;
+    case "save":saveForm();break;
+    case "del":del();break;
+    case "refresh":status("Refreshing…",false);pull();break;
+    case "pf":S.payer=d.p;render();break;
+    case "fpayer":F.payer=d.p;document.querySelectorAll("#f_payer button").forEach(function(b){b.classList.toggle("on",b.dataset.p===d.p)});break;
+    case "theme":var r=document.documentElement,dark=r.getAttribute("data-theme")==="dark"||(r.getAttribute("data-theme")!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.setAttribute("data-theme",dark?"light":"dark");break;
+    case "saveurl":var v=$("urlin").value.trim();if(/^https:\/\/script\.google\.com\//.test(v)){URL_=v;store("th_url",v);banner("");pull()}else toast("That doesn't look like an Apps Script URL");break;
+  }
+});
+document.addEventListener("input",function(e){
+  if(e.target.id==="f_amt")syncShares(null);
+  else if(e.target.id==="f_l")syncShares("l");
+  else if(e.target.id==="f_a")syncShares("a");
+});
+if(sheetUrl){$("sheetLink").href=sheetUrl;$("sheetLink").hidden=false}
+setInterval(function(){if(!document.hidden&&!$("modal").classList.contains("open"))pull()},60000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)pull()});
+sortTx();render();pull();
+})();
+</script>
+</body>
+</html>
