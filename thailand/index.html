@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thailand Trip Expenses</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1b1f2a;--muted:#6b7385;--line:#e6e9f2;--accent:#4f46e5;--good:#10b981;--bad:#ef4444}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1219;--card:#181c27;--text:#e8ebf4;--muted:#8b93a8;--line:#272c3b;--accent:#818cf8}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 40px}
+.wrap{max-width:640px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.cash{background:var(--accent);color:#fff;border:0}.cash .v{font-size:34px;font-weight:700}.cash .s{opacity:.85;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.k{font-size:12px;color:var(--muted)}.v{font-size:20px;font-weight:700}
+label{font-size:12px;color:var(--muted);display:block;margin:10px 0 4px}
+input,select{width:100%;padding:10px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{flex:1;padding:10px;border:0;background:var(--card);color:var(--muted);font-size:14px}.seg button.on{background:var(--accent);color:#fff}
+.btn{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:600}
+.tx{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.tx:last-child{border:0}
+.tx small{display:block;color:var(--muted);font-size:12px}.tx .a{text-align:right;font-weight:600;white-space:nowrap}
+.x{background:none;border:0;color:var(--bad);font-size:12px;padding:0}
+.st{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}h3{margin:0 0 8px;font-size:14px}
+</style></head><body><div class="wrap">
+
+<!-- Paste your Apps Script Web App URL below (see setup steps) -->
+<script>var SCRIPT_URL="";var CASH_START=10000;</script>
+
+<div class="card cash"><div class="s">Cash left</div><div class="v" id="cashLeft">฿0</div><div class="s" id="cashSub"></div></div>
+
+<div class="grid">
+ <div class="card"><div class="k">Luke spent (his share)</div><div class="v" id="lukeShare">฿0</div><div class="k" style="margin-top:6px">Luke CC paid</div><div id="lukePaid" style="font-weight:600">฿0</div></div>
+ <div class="card"><div class="k">Aswin spent (his share)</div><div class="v" id="aswinShare">฿0</div><div class="k" style="margin-top:6px">Aswin CC paid</div><div id="aswinPaid" style="font-weight:600">฿0</div></div>
+</div>
+<div class="card"><div class="k">Total trip spend</div><div class="v" id="total">฿0</div><div class="k" id="settle" style="margin-top:6px"></div></div>
+
+<div class="card"><h3>Add expense</h3>
+ <label>Description</label><input id="desc" placeholder="Dinner, Grab, hotel…">
+ <label>Amount (฿ THB)</label><input id="amt" type="number" inputmode="decimal" placeholder="0">
+ <label>Paid with</label>
+ <div class="seg" id="payer"><button data-v="Luke CC" class="on">Luke CC</button><button data-v="Aswin CC">Aswin CC</button><button data-v="Cash">Cash</button></div>
+ <label>Date</label><input id="date" type="date">
+ <label>Luke's share (฿) — leave blank for 50:50</label><input id="ls" type="number" inputmode="decimal" placeholder="blank = split equally">
+ <label>Aswin's share (฿) — auto-fills the rest</label><input id="as" type="number" inputmode="decimal" placeholder="blank = split equally">
+ <button class="btn" id="add">Add expense</button><div class="st" id="status"></div>
+</div>
+<div class="card"><h3>Expenses</h3><div id="list"></div><div class="st"><a id="sheetLink" href="#" target="_blank" style="color:var(--accent);display:none">Open spreadsheet</a></div></div>
+</div>
+<script>
+var $=function(i){return document.getElementById(i)},TX=[],payer="Luke CC";
+var fmt=function(n){return "฿"+(Math.round(n*100)/100).toLocaleString()};
+function loadLocal(){try{TX=JSON.parse(localStorage.getItem("th_tx")||"[]")}catch(e){TX=[]}}
+function saveLocal(){try{localStorage.setItem("th_tx",JSON.stringify(TX))}catch(e){}}
+function post(o){if(!SCRIPT_URL)return;fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(o)}).then(function(){$("status").textContent="Synced ✓"}).catch(function(){$("status").textContent="Sync failed (saved on this device)"})}
+function pull(){if(!SCRIPT_URL){$("status").textContent="Offline mode: add Apps Script URL to sync to a spreadsheet";return}
+ fetch(SCRIPT_URL).then(function(r){return r.json()}).then(function(j){TX=j.rows;saveLocal();render();if(j.url){$("sheetLink").href=j.url;$("sheetLink").style.display="inline"}$("status").textContent="Synced ✓"}).catch(function(){$("status").textContent="Couldn't reach sheet, showing saved data"})}
+function render(){
+ var cashSpent=0,lp=0,ap=0,ls=0,as=0,tot=0;
+ TX.forEach(function(t){tot+=t.amount;ls+=t.luke;as+=t.aswin;if(t.payer==="Cash")cashSpent+=t.amount;else if(t.payer==="Luke CC")lp+=t.amount;else ap+=t.amount});
+ var left=CASH_START-cashSpent;$("cashLeft").textContent=fmt(left);$("cashSub").textContent="of "+fmt(CASH_START)+" · spent "+fmt(cashSpent);
+ $("lukeShare").textContent=fmt(ls);$("aswinShare").textContent=fmt(as);$("lukePaid").textContent=fmt(lp);$("aswinPaid").textContent=fmt(ap);$("total").textContent=fmt(tot);
+ // card settlement: what each paid by card vs their share (cash treated as a shared pot, ignored)
+ var lNet=(lp+0)-0,cardLuke=0,cardAswin=0;
+ TX.forEach(function(t){if(t.payer==="Luke CC"){cardLuke+=t.aswin}else if(t.payer==="Aswin CC"){cardAswin+=t.luke}});
+ var d=cardAswin-cardLuke;$("settle").textContent=Math.abs(d)<0.5?"Card spending is settled":(d>0?"Luke owes Aswin "+fmt(d):"Aswin owes Luke "+fmt(-d))+" (card expenses only)";
+ $("list").innerHTML=TX.length?TX.slice().reverse().map(function(t){return '<div class="tx"><div>'+esc(t.desc)+'<small>'+t.date+' · '+t.payer+' · L '+fmt(t.luke)+' / A '+fmt(t.aswin)+'</small></div><div class="a">'+fmt(t.amount)+'<br><button class="x" data-id="'+t.id+'">delete</button></div></div>'}).join(""):'<div class="st">No expenses yet</div>'}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+document.querySelectorAll("#payer button").forEach(function(b){b.onclick=function(){payer=b.dataset.v;document.querySelectorAll("#payer button").forEach(function(x){x.classList.toggle("on",x===b)})}});
+$("ls").oninput=function(){var a=parseFloat($("amt").value)||0,l=parseFloat($("ls").value);$("as").value=isNaN(l)?"":Math.max(0,Math.round((a-l)*100)/100)};
+$("as").oninput=function(){var a=parseFloat($("amt").value)||0,v=parseFloat($("as").value);$("ls").value=isNaN(v)?"":Math.max(0,Math.round((a-v)*100)/100)};
+$("add").onclick=function(){
+ var a=parseFloat($("amt").value);if(!(a>0)){alert("Enter an amount");return}
+ var l=parseFloat($("ls").value),s=parseFloat($("as").value);
+ if(isNaN(l)&&isNaN(s)){l=a/2;s=a/2}else if(isNaN(s))s=a-l;else if(isNaN(l))l=a-s;
+ if(Math.abs(l+s-a)>0.01){alert("Shares must add up to the amount");return}
+ var t={id:Date.now().toString(36),date:$("date").value,desc:$("desc").value||"Expense",amount:a,payer:payer,luke:Math.round(l*100)/100,aswin:Math.round(s*100)/100};
+ TX.push(t);saveLocal();render();post(Object.assign({action:"add"},t));
+ $("desc").value=$("amt").value=$("ls").value=$("as").value=""};
+$("list").onclick=function(e){var id=e.target.dataset&&e.target.dataset.id;if(!id||!confirm("Delete this expense?"))return;TX=TX.filter(function(t){return t.id!==id});saveLocal();render();post({action:"delete",id:id})};
+$("date").value=new Date().toISOString().slice(0,10);loadLocal();render();pull();
+</script></body></html>
