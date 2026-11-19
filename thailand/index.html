@@ -81,6 +81,7 @@ nav button span{display:block;font-size:20px}nav button.on{color:var(--accent);f
 <nav>
   <button data-a="nav" data-v="home"><span>🏠</span>Home</button>
   <button data-a="nav" data-v="txns"><span>🧾</span>Expenses</button>
+  <button data-a="nav" data-v="inr"><span>₹</span>INR</button>
 </nav>
 <div id="modal"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
@@ -108,6 +109,7 @@ function today(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)
 function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove("show")},2400)}
 function status(m,l){$("status").textContent=m;$("dot").className="dot"+(l?" live":"")}
 function banner(h){$("banner").innerHTML=h?'<div class="banner">'+h+'</div>':""}
+function fmtI(n){return "₹"+(r2(n||0)).toLocaleString("en-IN",{minimumFractionDigits:0,maximumFractionDigits:2})}
 function icon(p){return p==="Cash"?"💵":"💳"}
 function saveLocal(){store("th_tx",JSON.stringify(TX))}
 function sortTx(){TX.forEach(function(t,i){if(t.seq==null)t.seq=i});TX.sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:b.seq-a.seq})}
@@ -137,24 +139,30 @@ function showUrlBanner(){
 
 /* ---------- totals ---------- */
 function totals(){
-  var o={total:0,cash:0,lukeShare:0,aswinShare:0,lukeCC:0,aswinCC:0,owedByLuke:0,owedByAswin:0};
+  var o={total:0,cash:0,lukeShare:0,aswinShare:0,lukeCC:0,aswinCC:0,owedByLuke:0,owedByAswin:0,iTotal:0,iL:0,iA:0,iLukeCC:0,iAswinCC:0,iCash:0,iOweL:0,iOweA:0,iCount:0,noInr:0};
   TX.forEach(function(t){
     o.total+=t.amount;o.lukeShare+=t.luke;o.aswinShare+=t.aswin;
     if(t.payer==="Cash")o.cash+=t.amount;
     else if(t.payer==="Luke CC"){o.lukeCC+=t.amount;o.owedByAswin+=t.aswin}
     else if(t.payer==="Aswin CC"){o.aswinCC+=t.amount;o.owedByLuke+=t.luke}
+    if(t.inr>0&&t.amount>0){
+      var k=t.inr/t.amount;o.iCount++;o.iTotal+=t.inr;o.iL+=t.luke*k;o.iA+=t.aswin*k;
+      if(t.payer==="Cash")o.iCash+=t.inr;
+      else if(t.payer==="Luke CC"){o.iLukeCC+=t.inr;o.iOweA+=t.aswin*k}
+      else{o.iAswinCC+=t.inr;o.iOweL+=t.luke*k}
+    }else o.noInr++;
   });
-  o.left=CASH_START-o.cash;o.net=o.owedByLuke-o.owedByAswin; // >0: Luke owes Aswin
+  o.left=CASH_START-o.cash;o.iNet=o.iOweL-o.iOweA;o.net=o.owedByLuke-o.owedByAswin; // >0: Luke owes Aswin
   return o;
 }
 
 /* ---------- rendering ---------- */
 function render(){
   document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v===S.view)});
-  (S.view==="home"?vHome:vTx)($("view"));
+  ({home:vHome,txns:vTx,inr:vInr}[S.view])($("view"));
 }
 function txRow(t){
-  return '<div class="tx" data-a="edit" data-id="'+esc(t.id)+'"><div class="ico" style="background:'+(t.payer==="Cash"?"#10b98122":"#4f46e522")+'">'+icon(t.payer)+'</div><div class="m"><b>'+esc(t.desc)+'</b><span>'+esc(t.payer)+' · '+esc(t.date)+'</span></div><div class="a">'+fmt(t.amount)+'<small>L '+fmt(t.luke)+' · A '+fmt(t.aswin)+'</small></div></div>';
+  return '<div class="tx" data-a="edit" data-id="'+esc(t.id)+'"><div class="ico" style="background:'+(t.payer==="Cash"?"#10b98122":"#4f46e522")+'">'+icon(t.payer)+'</div><div class="m"><b>'+esc(t.desc)+'</b><span>'+esc(t.payer)+' · '+esc(t.date)+'</span></div><div class="a">'+fmt(t.amount)+'<small>'+(t.inr>0?fmtI(t.inr)+' · ':'')+'L '+fmt(t.luke)+' · A '+fmt(t.aswin)+'</small></div></div>';
 }
 function vHome(el){
   var T=totals(),pct=Math.min(100,Math.max(0,T.left/CASH_START*100)),low=T.left<CASH_START*0.2;
@@ -174,12 +182,25 @@ function vTx(el){
   el.innerHTML=h+'</div>';
 }
 
+function vInr(el){
+  var T=totals();
+  var settle=T.iCount===0?"Add INR values to expenses to see this":Math.abs(T.iNet)<0.5?"Card spending is settled":(T.iNet>0?"Luke owes Aswin "+fmtI(T.iNet):"Aswin owes Luke "+fmtI(-T.iNet));
+  var h='<div class="card cashcard"><div class="sub">Total spent in INR</div><div class="big">'+fmtI(T.iTotal)+'</div><div class="sub">'+T.iCount+' expense'+(T.iCount===1?"":"s")+' with an INR value'+(T.noInr?' · '+T.noInr+' without':'')+'</div></div>'+
+  '<div class="card kpi"><div class="l">Settlement (card expenses, in INR)</div><div class="v">'+settle+'</div><div class="sub" style="margin-top:4px">Cash is treated as a shared pot and not included</div></div>'+
+  '<div class="grid kpis"><div class="card kpi"><div class="l">Luke spent (share)</div><div class="v">'+fmtI(T.iL)+'</div><div class="sub">Luke CC paid '+fmtI(T.iLukeCC)+'</div></div>'+
+  '<div class="card kpi"><div class="l">Aswin spent (share)</div><div class="v">'+fmtI(T.iA)+'</div><div class="sub">Aswin CC paid '+fmtI(T.iAswinCC)+'</div></div></div>'+
+  '<div class="card kpi"><div class="l">Paid in cash (INR value)</div><div class="v">'+fmtI(T.iCash)+'</div></div>'+
+  '<div class="hint" style="padding:0 4px">Each person’s INR share uses the same split as the ฿ amount. Only expenses where you entered an INR value are counted.</div>';
+  el.innerHTML=h;
+}
+
 /* ---------- add / edit form ---------- */
 function openForm(t){
   t=t||{};var editing=!!t.id;
   F={id:editing?t.id:null,payer:t.payer||"Luke CC",seq:t.seq,last:null};
   $("sheet").innerHTML='<div class="row between"><h3 style="font-size:17px">'+(editing?"Edit expense":"New expense")+'</h3><button class="btn sm" data-a="close">✕</button></div>'+
   '<label>Amount (฿ THB)</label><input id="f_amt" type="number" inputmode="decimal" step="any" value="'+(editing?t.amount:"")+'" placeholder="0" style="font-size:24px;font-weight:700">'+
+  '<label>INR value (optional)</label><input id="f_inr" type="number" inputmode="decimal" step="any" value="'+(editing&&t.inr>0?t.inr:"")+'" placeholder="₹ amount charged / equivalent">'+
   '<label>Description</label><input id="f_desc" value="'+esc(editing?t.desc:"")+'" placeholder="Dinner, Grab, hotel…">'+
   '<label>Paid with</label><div class="seg" id="f_payer">'+PAYERS.map(function(p){return '<button data-a="fpayer" data-p="'+p+'" class="'+(F.payer===p?"on":"")+'">'+p+'</button>'}).join("")+'</div>'+
   '<label>Date</label><input id="f_date" type="date" value="'+(editing?t.date:today())+'">'+
@@ -206,7 +227,7 @@ function saveForm(){
   if(isNaN(l)&&isNaN(s)){l=a/2;s=a-l}else if(isNaN(s))s=a-l;else if(isNaN(l))l=a-s;
   l=r2(l);s=r2(s);
   if(l<0||s<0||Math.abs(l+s-a)>0.01)return toast("Shares must add up to the amount");
-  var t={id:F.id||(Date.now().toString(36)+Math.random().toString(36).slice(2,5)),date:$("f_date").value||today(),desc:$("f_desc").value.trim()||"Expense",amount:r2(a),payer:F.payer,luke:l,aswin:s};
+  var t={id:F.id||(Date.now().toString(36)+Math.random().toString(36).slice(2,5)),date:$("f_date").value||today(),desc:$("f_desc").value.trim()||"Expense",amount:r2(a),payer:F.payer,luke:l,aswin:s,inr:(parseFloat($("f_inr").value)>0?r2(parseFloat($("f_inr").value)):null)};
   var action=F.id?"update":"add";
   if(F.id){var i=TX.findIndex(function(x){return x.id===F.id});t.seq=F.seq;if(i>=0)TX[i]=t}else{t.seq=TX.length?Math.max.apply(null,TX.map(function(x){return x.seq||0}))+1:0;TX.push(t)}
   sortTx();saveLocal();$("modal").classList.remove("open");render();toast("Saved");
